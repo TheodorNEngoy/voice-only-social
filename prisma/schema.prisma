@@ -1,0 +1,236 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AudioStatus {
+  processing
+  ready
+  failed
+}
+
+enum Visibility {
+  public
+  unlisted
+  followers
+}
+
+enum ReportSubjectType {
+  user
+  post
+  message
+}
+
+enum ReportReason {
+  abuse
+  spam
+  impersonation
+  other
+}
+
+enum ReportStatus {
+  open
+  closed
+}
+
+enum AppealStatus {
+  open
+  accepted
+  rejected
+}
+
+enum NotificationType {
+  follow
+  like
+  repost
+  mention
+  message
+}
+
+model User {
+  id             String    @id @default(cuid())
+  handle         String    @unique
+  email          String    @unique
+  name           String
+  bio            String?
+  avatar_url     String?
+  is_private     Boolean   @default(false)
+  is_restricted  Boolean   @default(false)
+  password_hash  String
+  totp_secret    String?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+  posts          Post[]
+  likes          Like[]
+  reposts        Repost[]
+  bookmarks      Bookmark[]
+  following      Follow[]  @relation("following")
+  followers      Follow[]  @relation("followers")
+  sent_messages  Message[] @relation("sent")
+  received_messages Message[] @relation("received")
+  notifications  Notification[]
+  notification_actors Notification[] @relation("NotificationActor")
+  reports        Report[] @relation("reports")
+  blocks         Block[] @relation("blocker")
+  blocked_by     Block[] @relation("blocked")
+  mutes          Mute[] @relation("muter")
+  muted_by       Mute[] @relation("muted")
+}
+
+model Follow {
+  follower_id String
+  followee_id String
+  created_at  DateTime @default(now())
+
+  follower User @relation("following", fields: [follower_id], references: [id])
+  followee User @relation("followers", fields: [followee_id], references: [id])
+
+  @@id([follower_id, followee_id])
+}
+
+model AudioAsset {
+  id              String      @id @default(cuid())
+  s3_key_original String
+  s3_key_m4a      String?
+  s3_key_webm     String?
+  s3_key_waveform String?
+  duration_seconds Float?
+  size_bytes      Int?
+  loudness        Float?
+  status          AudioStatus @default(processing)
+  created_at      DateTime    @default(now())
+  post            Post?
+  message         Message?
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  author_id       String
+  audio_asset_id  String
+  parent_post_id  String?
+  quote_post_id   String?
+  transcript      String?
+  duration_seconds Float?
+  visibility      Visibility @default(public)
+  created_at      DateTime   @default(now())
+
+  author     User      @relation(fields: [author_id], references: [id])
+  audio_asset AudioAsset @relation(fields: [audio_asset_id], references: [id])
+  parent     Post?     @relation("Thread", fields: [parent_post_id], references: [id])
+  replies    Post[]    @relation("Thread")
+  quote      Post?     @relation("Quote", fields: [quote_post_id], references: [id])
+  quotes     Post[]    @relation("Quote")
+  likes      Like[]
+  reposts    Repost[]
+  bookmarks  Bookmark[]
+
+  @@index([created_at(sort: Desc)])
+  @@index([author_id, created_at(sort: Desc)])
+}
+
+model Like {
+  user_id String
+  post_id String
+  created_at DateTime @default(now())
+  user   User @relation(fields: [user_id], references: [id])
+  post   Post @relation(fields: [post_id], references: [id])
+  @@id([user_id, post_id])
+}
+
+model Repost {
+  user_id String
+  post_id String
+  created_at DateTime @default(now())
+  user   User @relation(fields: [user_id], references: [id])
+  post   Post @relation(fields: [post_id], references: [id])
+  @@id([user_id, post_id])
+}
+
+model Bookmark {
+  user_id String
+  post_id String
+  created_at DateTime @default(now())
+  user   User @relation(fields: [user_id], references: [id])
+  post   Post @relation(fields: [post_id], references: [id])
+  @@id([user_id, post_id])
+}
+
+model Block {
+  blocker_id String
+  blocked_id String
+  created_at DateTime @default(now())
+
+  blocker User @relation("blocker", fields: [blocker_id], references: [id])
+  blocked User @relation("blocked", fields: [blocked_id], references: [id])
+
+  @@id([blocker_id, blocked_id])
+}
+
+model Mute {
+  muter_id String
+  muted_id String
+  created_at DateTime @default(now())
+
+  muter User @relation("muter", fields: [muter_id], references: [id])
+  muted User @relation("muted", fields: [muted_id], references: [id])
+
+  @@id([muter_id, muted_id])
+}
+
+model Message {
+  id             String     @id @default(cuid())
+  sender_id      String
+  recipient_id   String
+  audio_asset_id String
+  created_at     DateTime   @default(now())
+  read_at        DateTime?
+  transcript     String?
+
+  sender    User       @relation("sent", fields: [sender_id], references: [id])
+  recipient User       @relation("received", fields: [recipient_id], references: [id])
+  audio     AudioAsset @relation(fields: [audio_asset_id], references: [id])
+}
+
+model Notification {
+  id        String            @id @default(cuid())
+  user_id   String
+  type      NotificationType
+  actor_id  String
+  post_id   String?
+  created_at DateTime @default(now())
+  read_at   DateTime?
+
+  user  User @relation(fields: [user_id], references: [id])
+  actor User @relation("NotificationActor", fields: [actor_id], references: [id])
+  post  Post? @relation(fields: [post_id], references: [id])
+}
+
+model Report {
+  id           String           @id @default(cuid())
+  reporter_id  String
+  subject_type ReportSubjectType
+  subject_id   String
+  reason       ReportReason
+  notes        String?
+  status       ReportStatus @default(open)
+  created_at   DateTime      @default(now())
+
+  reporter User @relation("reports", fields: [reporter_id], references: [id])
+  appeals  Appeal[]
+}
+
+model Appeal {
+  id        String       @id @default(cuid())
+  report_id String
+  user_id   String
+  reason    String
+  status    AppealStatus @default(open)
+  created_at DateTime    @default(now())
+
+  report Report @relation(fields: [report_id], references: [id])
+  user   User   @relation(fields: [user_id], references: [id])
+}

@@ -1,0 +1,29 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "VoxOnly API",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://localhost:3000" }],
+  "paths": {
+    "/api/auth/register": {"post": {"summary": "Register","requestBody": {"required": true,"content": {"application/json": {"schema": {"type": "object","properties": {"email": {"type": "string","format": "email"},"password": {"type": "string","minLength": 12},"handle": {"type": "string"},"name": {"type": "string"}},"required": ["email","password","handle","name"]}}}},"responses": {"200": {"description": "Created"}}}},
+    "/api/auth/login": {"post": {"summary": "Login","responses": {"200": {"description": "OK"}}}},
+    "/api/auth/logout": {"post": {"summary": "Logout","responses": {"200": {"description": "OK"}}}},
+    "/api/auth/me": {"get": {"summary": "Current session","responses": {"200": {"description": "OK"}}}},
+    "/api/uploads/prepare": {"post": {"summary": "Request presigned upload","responses": {"200": {"description": "OK"}}}},
+    "/api/posts": {"get": {"summary": "List posts","responses": {"200": {"description": "OK"}}},"post": {"summary": "Create post","responses": {"200": {"description": "OK"}}}},
+    "/api/posts/{postId}/like": {"post": {"summary": "Like"},"delete": {"summary": "Unlike"}},
+    "/api/posts/{postId}/repost": {"post": {"summary": "Repost"},"delete": {"summary": "Undo repost"}},
+    "/api/posts/{postId}/bookmark": {"post": {"summary": "Bookmark"},"delete": {"summary": "Remove bookmark"}},
+    "/api/users/{handle}": {"get": {"summary": "Profile"}},
+    "/api/users/{handle}/follow": {"post": {"summary": "Follow"},"delete": {"summary": "Unfollow"}},
+    "/api/users/{handle}/block": {"post": {"summary": "Block"},"delete": {"summary": "Unblock"}},
+    "/api/users/{handle}/mute": {"post": {"summary": "Mute"},"delete": {"summary": "Unmute"}},
+    "/api/feed/following": {"get": {"summary": "Following feed"}},
+    "/api/feed/for-you": {"get": {"summary": "For you feed"}},
+    "/api/messages": {"get": {"summary": "List messages"},"post": {"summary": "Send message"}},
+    "/api/notifications": {"get": {"summary": "List notifications"}},
+    "/api/reports": {"post": {"summary": "Report"}},
+    "/api/reports/{id}/appeal": {"post": {"summary": "Appeal moderation"}}
+  }
+}
