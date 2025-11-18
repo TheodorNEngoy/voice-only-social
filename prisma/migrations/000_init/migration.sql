@@ -1,0 +1,1 @@
+-- This project expects `npx prisma migrate dev` to regenerate SQL.

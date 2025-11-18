@@ -1,35 +1,10 @@
-# Node / Next.js
-node_modules/
-.next/
-out/
-dist/
-build/
-coverage/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-lock.yaml
-package-lock.json
-
-# Turbo workspace cache
-.turbo/
-
-# Env (never commit real env files)
-.env
-.env.*
-!.env.example
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-logs
+node_modules
+.next
+.env*
+dist
+coverage
+playwright-report
+blob_storage
 *.log
-*.pid
-*.seed
-*.pid.lock
-
-# Editors
-.idea/
-.vscode/
+.DS_Store
+!.env.example
